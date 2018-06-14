@@ -60,7 +60,7 @@
 					</descriptorRefs>
 					<archive>
 						<manifest>
-							<mainClass>org.n52.project.testbed14.DecisiontreeClassification</mainClass>
+							<mainClass>org.n52.project.testbed14.Main</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
