@@ -13,25 +13,30 @@ import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.tuning.ParamGridBuilder
 import org.apache.spark.ml.tuning.CrossValidator
+import org.slf4j.LoggerFactory
 
-object DecisiontreeClassification {
+class DecisiontreeClassification {
 
   implicit val spark = SparkSession.builder().
     master("local[*]").appName(getClass.getName).getOrCreate().withRasterFrames
   spark.sparkContext.setLogLevel("ERROR")
 
+  val logger = LoggerFactory.getLogger(classOf[DecisiontreeClassification])
+  
   import spark.implicits._
 
   // Utility for reading imagery from our test data set
   def readTiff(name: String): SinglebandGeoTiff = SinglebandGeoTiff(s"d:/tmp/resources/$name")
 
-  def main(args: Array[String]) {
+  def run(args: Array[String]) {
 
     val filenamePattern = "L8-%s-Elkton-VA.tiff"
     val bandNumbers = 2 to 7
     val bandColNames = bandNumbers.map(b ⇒ s"band_$b").toArray
     val tileSize = 10
 
+    logger.info("Array length: " + args.length)
+    
     // For each identified band, load the associated image file
     val joinedRF = bandNumbers.
       map { b ⇒ (b, filenamePattern.format("B" + b)) }.
