@@ -20,62 +20,60 @@ class DecisiontreeClassification {
 
   implicit val spark = SparkSession.builder().
     master("local[*]").appName(getClass.getName).getOrCreate().withRasterFrames
-  spark.sparkContext.setLogLevel("INFO")
-
-  val logger = LoggerFactory.getLogger(classOf[DecisiontreeClassification])
+  spark.sparkContext.setLogLevel("ERROR")
 
   import spark.implicits._
 
-  // Utility for reading imagery from our test data set
-  def readTiff(name: String): SinglebandGeoTiff = SinglebandGeoTiff(s"D:/52n/Projekte/Testbed-14/ML/$name")
-
   def run(args: Array[String]) {
 
-//    val filenamePattern = "L8-%s-Elkton-VA.tiff"
     val bandNumbers = 2 to 7
     val bandColNames = bandNumbers.map(b ⇒ s"band_$b").toArray
     val tileSize = 10
     
-    logger.debug("Array length: " + args.length)
+    println("Array length: " + args.length)
     
     var tiffName = "IMG_PHR1B_P_201509271105571_ORT_1974032101-001_R1C1_subset2_downsized3.tif"
 
     var labelName = "labels4.tif"
     
+    var inputFileDir = "/tmp/"
+    
+    var outputFileDir = "/tmp/wps-out/"
+    
+    var outputFile = "classification.png"
+    
     if(args.length > 0){
       tiffName = args(0)
+      println("Tiff name: " + tiffName)
     }
     
     if(args.length > 1){
     	labelName = args(1)
+      println("Label name: " + labelName)
     }
-
-    // For each identified band, load the associated image file
-//    val joinedRF = bandNumbers.
-//      map { b ⇒ (b, filenamePattern.format("B" + b)) }.
-//      map { case (b, f) ⇒ (b, readTiff(f)) }.
-//      map { case (b, t) ⇒ t.projectedRaster.toRF(tileSize, tileSize, s"band_$b") }.
-//      reduce(_ spatialJoin _)
-//
-//    joinedRF.printSchema()
-
-//    val tiffFilePath = new File("D:/52n/Projekte/Testbed-14/ML/IMG_PHR1B_P_201509271105571_ORT_1974032101-001_R1C1.tif")
-//    
-//    val tiffRF = spark.read.
-//      geotiff.
-//      loadRF(tiffFilePath.toURI)
+    
+    if(args.length > 2){
+    	inputFileDir = args(2)
+      println("Input file directory: " + inputFileDir)
+    }
+    
+    if(args.length > 3){
+    	outputFileDir = args(3)
+      println("Output file directory: " + outputFileDir)
+    }
+    
+    if(args.length > 4){
+    	outputFile = args(4)
+      println("Output file directory: " + outputFile)
+    }
+    
+    def readTiff(name: String): SinglebandGeoTiff = SinglebandGeoTiff(s"$inputFileDir$name")
 
     val tiffRF = readTiff(tiffName).
       projectedRaster.
       toRF(tileSize, tileSize, "band_2")
       
     tiffRF.printSchema()
-      
-//    val labelFilePath = new File("D:/52n/Projekte/Testbed-14/ML/labels.tif")
-//          
-//    val labelRF = spark.read.
-//      geotiff.
-//      loadRF(labelFilePath.toURI)
 
     val targetCol = "target"
     
@@ -91,7 +89,6 @@ class DecisiontreeClassification {
     val exploder = new TileExploder()
 
     val noDataFilter = new NoDataFilter().
-//      setInputCols(1)
       setInputCols(bandColNames :+ targetCol)
 
     val assembler = new VectorAssembler().
@@ -142,11 +139,11 @@ class DecisiontreeClassification {
 
     val rf = retiled.asRF($"spatial_key", tlm)
 
-    val raster = rf.toRaster($"prediction", 250, 331)
+    val raster = rf.toRaster($"prediction", 250, 331)//TODO make dynammic for different image sizes
 
     val clusterColors = IndexedColorMap.fromColorMap(
       ColorRamps.Viridis.toColorMap((0 until 3).toArray))
 
-    raster.tile.renderPng(clusterColors).write("d:/tmp/classified23536848355.png")
+    raster.tile.renderPng(clusterColors).write(s"$outputFileDir$outputFile")
   }
 }

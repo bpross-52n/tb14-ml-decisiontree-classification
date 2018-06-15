@@ -44,6 +44,11 @@
 			<artifactId>spark-catalyst_2.11</artifactId>
 			<version>2.2.1</version>
 		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.0.13</version>
+		</dependency>
 	</dependencies>
 
 	<build>
