@@ -45,6 +45,11 @@
 			<version>2.2.1</version>
 		</dependency>
 		<dependency>
+			<groupId>org.apache.parquet</groupId>
+			<artifactId>parquet-common</artifactId>
+			<version>1.8.2</version>
+		</dependency>
+		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
 			<version>1.0.13</version>
@@ -60,26 +65,59 @@
 				<artifactId>scala-maven-plugin</artifactId>
 				<version>3.4.0</version>
 			</plugin>
+			<!-- <plugin> -->
+			<!-- <groupId>org.apache.maven.plugins</groupId> -->
+			<!-- <artifactId>maven-assembly-plugin</artifactId> -->
+			<!-- <version>2.4</version> -->
+			<!-- <configuration> -->
+			<!-- <descriptorRefs> -->
+			<!-- <descriptorRef>jar-with-dependencies</descriptorRef> -->
+			<!-- </descriptorRefs> -->
+			<!-- <archive> -->
+			<!-- <manifest> -->
+			<!-- <mainClass>org.n52.project.testbed14.Main</mainClass> -->
+			<!-- </manifest> -->
+			<!-- </archive> -->
+			<!-- </configuration> -->
+			<!-- <executions> -->
+			<!-- <execution> -->
+			<!-- <phase>package</phase> -->
+			<!-- <goals> -->
+			<!-- <goal>single</goal> -->
+			<!-- </goals> -->
+			<!-- </execution> -->
+			<!-- </executions> -->
+			<!-- </plugin> -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.4</version>
-				<configuration>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-					<archive>
-						<manifest>
-							<mainClass>org.n52.project.testbed14.Main</mainClass>
-						</manifest>
-					</archive>
-				</configuration>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>2.3</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
 						<goals>
-							<goal>single</goal>
+							<goal>shade</goal>
 						</goals>
+						<configuration>
+							<filters>
+								<filter>
+									<artifact>*:*</artifact>
+									<excludes>
+										<exclude>META-INF/*.SF</exclude>
+										<exclude>META-INF/*.DSA</exclude>
+										<exclude>META-INF/*.RSA</exclude>
+									</excludes>
+								</filter>
+							</filters>
+							<transformers>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<mainClass>org.n52.project.testbed14.Main</mainClass>
+								</transformer>
+							</transformers>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
