@@ -34,8 +34,6 @@ class DecisiontreeClassification {
     println("Array length: " + args.length)
     
     var tiffName = "IMG_PHR1B_P_201509271105571_ORT_1974032101-001_R1C1_subset2_downsized3.tif"
-
-    var labelName = "labels4.tif"
     
     var inputFileDir = "/tmp/"
     
@@ -49,22 +47,17 @@ class DecisiontreeClassification {
     }
     
     if(args.length > 1){
-    	labelName = args(1)
-      println("Label name: " + labelName)
-    }
-    
-    if(args.length > 2){
-    	inputFileDir = args(2)
+    	inputFileDir = args(1)
       println("Input file directory: " + inputFileDir)
     }
     
-    if(args.length > 3){
-    	outputFileDir = args(3)
+    if(args.length > 2){
+    	outputFileDir = args(2)
       println("Output file directory: " + outputFileDir)
     }
     
-    if(args.length > 4){
-    	modelPath = args(4)
+    if(args.length > 3){
+    	modelPath = args(3)
       println("Model directory: " + modelPath)
     }
     
@@ -75,48 +68,6 @@ class DecisiontreeClassification {
       toRF(tileSize, tileSize, "band_2")
       
     tiffRF.printSchema()
-
-    val targetCol = "target"
-    
-    val target = readTiff(labelName).
-      mapTile(_.convert(DoubleConstantNoDataCellType)).
-      projectedRaster.
-      toRF(tileSize, tileSize, targetCol)
-
-    target.select(aggStats(target(targetCol))).show
-
-    val abt = tiffRF.spatialJoin(target)
-
-    val exploder = new TileExploder()
-
-    val noDataFilter = new NoDataFilter().
-      setInputCols(bandColNames :+ targetCol)
-
-    val assembler = new VectorAssembler().
-      setInputCols(Array("band_2")).
-      setOutputCol("features")
-
-    val classifier = new DecisionTreeClassifier().
-      setLabelCol(targetCol).
-      setFeaturesCol(assembler.getOutputCol)
-
-    val pipeline = new Pipeline().
-      setStages(Array(exploder, noDataFilter, assembler, classifier))
-
-    val evaluator = new MulticlassClassificationEvaluator().
-      setLabelCol(targetCol).
-      setPredictionCol("prediction").
-      setMetricName("accuracy")
-
-    val paramGrid = new ParamGridBuilder().
-      addGrid(classifier.maxDepth, Array(2, 3, 4)).
-      build()
-
-    val trainer = new CrossValidator().
-      setEstimator(pipeline).
-      setEvaluator(evaluator).
-      setEstimatorParamMaps(paramGrid).
-      setNumFolds(4)
       
     val model = CrossValidatorModel.load(modelPath)
     
