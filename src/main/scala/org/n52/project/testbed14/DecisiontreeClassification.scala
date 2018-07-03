@@ -15,6 +15,7 @@ import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.tuning.ParamGridBuilder
 import org.apache.spark.ml.tuning.CrossValidator
 import org.slf4j.LoggerFactory
+import org.apache.spark.ml.tuning.CrossValidatorModel
 
 class DecisiontreeClassification {
 
@@ -40,7 +41,7 @@ class DecisiontreeClassification {
     
     var outputFileDir = "/tmp/wps-out/"
     
-    var outputFile = "classification.png"
+    var modelPath = "/tmp/wps-out/model"
     
     if(args.length > 0){
       tiffName = args(0)
@@ -63,8 +64,8 @@ class DecisiontreeClassification {
     }
     
     if(args.length > 4){
-    	outputFile = args(4)
-      println("Output file directory: " + outputFile)
+    	modelPath = args(4)
+      println("Model directory: " + modelPath)
     }
     
     def readTiff(name: String): SinglebandGeoTiff = SinglebandGeoTiff(s"$inputFileDir$name")
@@ -116,21 +117,17 @@ class DecisiontreeClassification {
       setEvaluator(evaluator).
       setEstimatorParamMaps(paramGrid).
       setNumFolds(4)
-
-    val model = trainer.fit(abt)
-
+      
+    val model = CrossValidatorModel.load(modelPath)
+    
     val metrics = model.getEstimatorParamMaps.
       map(_.toSeq.map(p ⇒ s"${p.param.name} = ${p.value}")).
       map(_.mkString(", ")).
       zip(model.avgMetrics)
 
     metrics.toSeq.toDF("params", "metric").show(false)
-
-    metrics.toSeq.toDF("params", "metric").rdd.map(_.toString()).saveAsTextFile(s"$outputFileDir" + "metrics")
     
     val scored = model.bestModel.transform(tiffRF)
-
-    model.save(s"$outputFileDir" + "model")
     
     scored.groupBy($"prediction" as "class").count().show
 
@@ -148,6 +145,6 @@ class DecisiontreeClassification {
     val clusterColors = IndexedColorMap.fromColorMap(
       ColorRamps.Viridis.toColorMap((0 until 3).toArray))
 
-    raster.tile.renderPng(clusterColors).write(s"$outputFileDir$outputFile")
+    raster.tile.renderPng(clusterColors).write(s"$outputFileDir" + "classification.png")
   }
 }
