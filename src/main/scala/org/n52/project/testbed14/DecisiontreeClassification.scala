@@ -16,6 +16,7 @@ import org.apache.spark.ml.tuning.ParamGridBuilder
 import org.apache.spark.ml.tuning.CrossValidator
 import org.slf4j.LoggerFactory
 import org.apache.spark.ml.tuning.CrossValidatorModel
+import geotrellis.raster.io.geotiff.GeoTiff
 
 class DecisiontreeClassification {
 
@@ -91,11 +92,8 @@ class DecisiontreeClassification {
 
     val rf = retiled.asRF($"spatial_key", tlm)
 
-    val raster = rf.toRaster($"prediction", 250, 331)//TODO make dynammic for different image sizes
-
-    val clusterColors = IndexedColorMap.fromColorMap(
-      ColorRamps.Viridis.toColorMap((0 until 3).toArray))
-
-    raster.tile.renderPng(clusterColors).write(s"$outputFileDir" + "classification.png")
+    val raster = rf.toRaster($"prediction", 250, 331)//TODO make dynamic for different image sizes
+      
+    GeoTiff(raster).write(s"$outputFileDir" + "classification.tiff")
   }
 }
