@@ -79,6 +79,8 @@ class DecisiontreeClassification {
 
     metrics.toSeq.toDF("params", "metric").show(false)
     
+    metrics.toSeq.toDF("params", "metric").rdd.map(_.toString()).saveAsTextFile(s"$outputFileDir" + "metrics")
+    
     val scored = model.bestModel.transform(tiffRF)
     
     scored.groupBy($"prediction" as "class").count().show
